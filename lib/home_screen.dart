@@ -143,21 +143,112 @@ class DashboardTab extends StatelessWidget {
   }
 }
 
-class FaceAttendanceTab extends StatelessWidget {
+class FaceAttendanceTab extends StatefulWidget {
   const FaceAttendanceTab({super.key});
+
+  @override
+  State<FaceAttendanceTab> createState() => _FaceAttendanceTabState();
+}
+
+enum ScanState { idle, scanning, success }
+
+class _FaceAttendanceTabState extends State<FaceAttendanceTab> {
+  ScanState state = ScanState.idle;
+  final Color primaryBlue = const Color(0xFF1565C0);
+
+  void startScan() async {
+    setState(() => state = ScanState.scanning);
+
+    await Future.delayed(const Duration(seconds: 2));
+
+    setState(() => state = ScanState.success);
+  }
+
+  void resetScan() {
+    setState(() => state = ScanState.idle);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.face_retouching_natural, size: 80, color: Colors.blue.shade300),
-          const SizedBox(height: 16),
-          const Text("Face Attendance", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          Text("Camera scan will go here", style: TextStyle(color: Colors.grey.shade600)),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (state == ScanState.idle) ...[
+              Icon(Icons.face_retouching_natural, size: 90, color: Colors.blue.shade300),
+              const SizedBox(height: 20),
+              const Text("Face Attendance", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              Text(
+                "Scan your face to mark attendance",
+                style: TextStyle(color: Colors.grey.shade600),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 28),
+              ElevatedButton.icon(
+                onPressed: startScan,
+                icon: const Icon(Icons.camera_alt_outlined, color: Colors.white),
+                label: const Text("Start Face Scan", style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryBlue,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ],
+
+            if (state == ScanState.scanning) ...[
+              Container(
+                width: 220,
+                height: 220,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade200,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: primaryBlue, width: 3),
+                ),
+                child: Icon(Icons.face, size: 100, color: primaryBlue),
+              ),
+              const SizedBox(height: 24),
+              CircularProgressIndicator(color: primaryBlue),
+              const SizedBox(height: 16),
+              const Text("Scanning your face...", style: TextStyle(fontSize: 15)),
+            ],
+
+            if (state == ScanState.success) ...[
+              Container(
+                width: 100,
+                height: 100,
+                decoration: BoxDecoration(
+                  color: Colors.green.shade50,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.check_circle, size: 70, color: Colors.green.shade600),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                "Attendance Marked Successfully",
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                "Checked in at ${TimeOfDay.now().format(context)}",
+                style: TextStyle(color: Colors.grey.shade600),
+              ),
+              const SizedBox(height: 28),
+              OutlinedButton(
+                onPressed: resetScan,
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: const Text("Scan Again"),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
