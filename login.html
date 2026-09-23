@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin Login</title>
+  <style>
+    body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #f2f2f2; }
+    .box { background: #fff; padding: 24px; border-radius: 8px; width: 300px; box-shadow: 0 2px 8px rgba(0,0,0,.15); }
+    input, button { width: 100%; padding: 10px; margin-top: 10px; box-sizing: border-box; }
+    button { cursor: pointer; }
+    #err { color: red; font-size: 14px; min-height: 18px; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2>Admin Login</h2>
+    <input id="email" type="email" placeholder="Email">
+    <input id="password" type="password" placeholder="Password">
+    <button id="loginBtn">Login</button>
+    <p id="err"></p>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+    const firebaseConfig = {
+        apiKey: "AIzaSyB3ugtSjVcwUAaXjsf53GE95cop5qN0H-Y",
+        authDomain: "attendance-demo-1317e.firebaseapp.com",
+        projectId: "attendance-demo-1317e",
+        storageBucket: "attendance-demo-1317e.firebasestorage.app",
+        messagingSenderId: "576338515275",
+        appId: "1:576338515275:web:1c5b70c2c5c66a63f2c4ce",
+        measurementId: "G-K0KZM6SLN1"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const emailEl = document.getElementById("email");
+    const passEl = document.getElementById("password");
+    const errEl = document.getElementById("err");
+    const btn = document.getElementById("loginBtn");
+
+    async function login() {
+      errEl.textContent = "";
+      btn.disabled = true;
+      try {
+        const cred = await signInWithEmailAndPassword(auth, emailEl.value.trim(), passEl.value);
+        const snap = await getDoc(doc(db, "Admin", cred.user.uid));
+        if (!snap.exists()) {
+          await signOut(auth);
+          errEl.textContent = "Not an admin.";
+        } else {
+          location.href = "admin.html";
+        }
+      } catch (e) {
+        errEl.textContent = "Login failed: " + e.code;
+      }
+      btn.disabled = false;
+    }
+
+    btn.addEventListener("click", login);
+    passEl.addEventListener("keydown", (e) => { if (e.key === "Enter") login(); });
+  </script>
+</body>
+</html>

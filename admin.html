@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin Panel</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    body { font-family: sans-serif; margin: 0; padding: 16px; }
+    #map { height: 500px; margin: 12px 0; }
+    .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    button { padding: 8px 14px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="row">
+    <h2 style="margin:0">Office Geofence</h2>
+    <button id="logout">Logout</button>
+  </div>
+
+  <div id="map"></div>
+
+  <div class="row">
+    <label>Radius (m): <input id="radius" type="range" min="20" max="1000" value="100"></label>
+    <span id="rval">100</span>
+    <button id="myLoc">Use my location</button>
+    <button id="save">Save Geofence</button>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+    const firebaseConfig = {
+        apiKey: "AIzaSyB3ugtSjVcwUAaXjsf53GE95cop5qN0H-Y",
+        authDomain: "attendance-demo-1317e.firebaseapp.com",
+        projectId: "attendance-demo-1317e",
+        storageBucket: "attendance-demo-1317e.firebasestorage.app",
+        messagingSenderId: "576338515275",
+        appId: "1:576338515275:web:1c5b70c2c5c66a63f2c4ce",
+        measurementId: "G-K0KZM6SLN1"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Route guard
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) { location.href = "login.html"; return; }
+      const snap = await getDoc(doc(db, "Admin", user.uid));
+      if (!snap.exists()) { await signOut(auth); location.href = "login.html"; return; }
+      loadExisting();
+    });
+
+    const map = L.map("map").setView([18.5204, 73.8567], 15);
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "&copy; OpenStreetMap contributors"
+    }).addTo(map);
+
+    const radiusEl = document.getElementById("radius");
+    const rvalEl = document.getElementById("rval");
+    let marker = null, circle = null;
+
+    function draw(latlng, r) {
+      if (marker) map.removeLayer(marker);
+      if (circle) map.removeLayer(circle);
+      marker = L.marker(latlng).addTo(map);
+      circle = L.circle(latlng, { radius: r }).addTo(map);
+    }
+
+    map.on("click", (e) => draw(e.latlng, +radiusEl.value));
+
+    radiusEl.oninput = () => {
+      rvalEl.textContent = radiusEl.value;
+      if (circle) circle.setRadius(+radiusEl.value);
+    };
+
+    document.getElementById("myLoc").onclick = () => {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const ll = [pos.coords.latitude, pos.coords.longitude];
+          draw(ll, +radiusEl.value);
+          map.setView(ll, 18);
+        },
+        (err) => alert("Location error: " + err.message)
+      );
+    };
+
+    document.getElementById("save").onclick = async () => {
+      if (!marker) return alert("Click the map to set the office location first.");
+      const { lat, lng } = marker.getLatLng();
+      try {
+        await setDoc(doc(db, "config", "geofence"), {
+          lat, lng, radius: +radiusEl.value,
+          updatedBy: auth.currentUser.uid,
+          updatedAt: serverTimestamp()
+        });
+        alert("Saved.");
+      } catch (e) {
+        alert("Save failed: " + e.code);
+      }
+    };
+
+    async function loadExisting() {
+      const s = await getDoc(doc(db, "config", "geofence"));
+      if (s.exists()) {
+        const { lat, lng, radius: r } = s.data();
+        radiusEl.value = r; rvalEl.textContent = r;
+        draw([lat, lng], r);
+        map.setView([lat, lng], 17);
+      }
+    }
+
+    document.getElementById("logout").onclick = () =>
+      signOut(auth).then(() => location.href = "login.html");
+  </script>
+</body>
+</html>
