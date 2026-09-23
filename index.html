@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Face Liveliness Prototype</title>
+<link rel="stylesheet" href="css/styles.css">
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <h1>Face Liveliness Prototype</h1>
+  <p class="sub">Randomized active challenge + passive texture/reflection analysis — Layer 3 of the attendance framework.</p>
+
+  <div class="stage" id="stage">
+    <div class="placeholder" id="placeholder">Press "Start Camera" to begin</div>
+    <video id="video" autoplay playsinline muted style="display:none"></video>
+    <canvas id="overlay" style="display:none"></canvas>
+    <div class="challenge-banner" id="challengeBanner"></div>
+  </div>
+
+  <div class="status-bar neutral" id="statusBar">
+    <div class="dot"></div>
+    <span id="statusText">Idle</span>
+  </div>
+
+  <div class="section-label">Active Signal — Landmark Tracking</div>
+  <div class="metrics">
+    <div class="metric"><div class="label">Eye Aspect Ratio</div><div class="value" id="earVal">—</div></div>
+    <div class="metric"><div class="label">Mouth Ratio Δ</div><div class="value" id="mouthVal">—</div></div>
+    <div class="metric"><div class="label">Head Yaw Δ</div><div class="value" id="yawVal">—</div></div>
+    <div class="metric"><div class="label">Blinks</div><div class="value" id="blinkVal">0</div></div>
+  </div>
+
+  <div class="section-label">Passive Signal — Texture &amp; Reflection Heuristic</div>
+  <div class="passive-card">
+    <div class="passive-row">
+      <span>Specular highlight ratio</span>
+      <div class="bar-track"><div class="bar-fill" id="barHighlight" style="width:0%"></div></div>
+      <span id="valHighlight">—</span>
+    </div>
+    <div class="passive-row">
+      <span>Texture uniformity</span>
+      <div class="bar-track"><div class="bar-fill" id="barTexture" style="width:0%"></div></div>
+      <span id="valTexture">—</span>
+    </div>
+    <div class="passive-row">
+      <span>Color diversity</span>
+      <div class="bar-track"><div class="bar-fill" id="barColor" style="width:0%"></div></div>
+      <span id="valColor">—</span>
+    </div>
+    <div class="passive-verdict" id="passiveVerdict" style="display:none;"></div>
+  </div>
+
+  <div class="controls">
+    <button class="primary" id="startBtn">Start Camera</button>
+    <button id="checkBtn" disabled>Start Liveliness Check</button>
+    <button id="resetBtn" disabled>Reset</button>
+  </div>
+
+  
+</div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
