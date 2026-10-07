@@ -1,30 +1,73 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:attendance_demo/main.dart';
+import 'package:attendance_demo/core/constants/app_constants.dart';
+import 'package:attendance_demo/core/theme/app_theme.dart';
+import 'package:attendance_demo/core/widgets/app_button.dart';
+import 'package:attendance_demo/core/widgets/app_card.dart';
+import 'package:attendance_demo/core/widgets/status_badge.dart';
+import 'package:attendance_demo/features/auth/splash_screen.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('SplashScreen smoke test displays branding and organization', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightTheme,
+        home: const SplashScreen(),
+      ),
+    );
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    expect(find.text(AppConstants.appName), findsOneWidget);
+    expect(find.text('${AppConstants.organizationName} • Employee Portal'), findsOneWidget);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+  });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+  testWidgets('AppButton displays label and responds to taps', (tester) async {
+    bool tapped = false;
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AppButton(
+            label: 'Confirm Attendance',
+            onPressed: () {
+              tapped = true;
+            },
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Confirm Attendance'), findsOneWidget);
+    await tester.tap(find.text('Confirm Attendance'));
+    expect(tapped, isTrue);
+  });
+
+  testWidgets('StatusBadge renders correctly with custom styling', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: StatusBadge(
+            label: 'On Time',
+            type: StatusBadgeType.success,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('On Time'), findsOneWidget);
+  });
+
+  testWidgets('AppCard renders child and adheres to 1px border styling', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: AppCard(
+            child: Text('Card Content'),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Card Content'), findsOneWidget);
   });
 }

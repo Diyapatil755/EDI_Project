@@ -1,0 +1,26 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // One document per employee, doc id = Firebase Auth uid.
+    match /employees/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+
+      // First login (demo auto-profile). Turn this off in production and let
+      // the admin panel create employees instead.
+      allow create: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.role == 'Employee';
+
+      // The app may only: bind the device once, and set phoneVerified.
+      // Role / department / device reset are admin-only (Admin SDK).
+      allow update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['registeredDeviceId', 'registeredDeviceModel',
+                       'deviceBoundAt', 'phoneVerified'])
+        && (!('registeredDeviceId' in resource.data)
+            || resource.data.registeredDeviceId == null
+            || resource.data.registeredDeviceId == ''
+            || request.resource.data.registeredDeviceId == resource.data.registeredDeviceId);
+    }
+  }
+}
